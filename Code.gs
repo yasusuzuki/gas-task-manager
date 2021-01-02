@@ -62,7 +62,6 @@ const DOCUMENT_URL = "https://docs.google.com/spreadsheets/d/1jVXk7dFdn7fQWStyc3
 function reset(){
   //Cacheをすべてクリア
   DEF_ITEM_LIST.forEach( e => CacheService.getScriptCache().remove(e)); 
-
   var env = getReleaseEnvironment();
   var prop = PropertiesService.getScriptProperties();
   console.log("Env before: "+ prop.getProperty("ENV"));
@@ -114,7 +113,7 @@ function sanityCheck(){
 function summaryReport(){
   updateLogSheet("summaryReport()を開始します。");
   var data = listTask();
-  //var data = JSON.parse(TEST_DATA_TASKLIST,reviver);
+  //var data = JSON.parse(TEST_DATA_TASKLIST,reviver); 
   
   var col = columnNameMapForArrayIndex();
   var text = "<"+DOCUMENT_URL+"|要回答など期限管理>"
@@ -192,7 +191,7 @@ function summaryReport(){
   }
 
   slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text}}]));
-  sendEmail(text);
+  //TODO: sendEmail(text);
   updateLogSheet("summaryReport()　完了しました");
 }
 
@@ -207,6 +206,7 @@ function sendEmail(text){
     htmlBody: htmlBodyText.getContent(),
   });*/
   console.log(htmlBodyText.getContent());
+
 }
 
 /***************************************************************************
@@ -297,10 +297,7 @@ function scheduledPollingCommandsFromSlack(){
 
 
 
-function TESTtaskack(){
-  var ret = taskack("T864 了解","U9ST58P4L","1608162195.000100");
-  console.log(ret);
-}
+
 
 function taskack(text, user, message_ts){
   console.log("taskack() start: user["+user+"] text["+text+"] message_ts["+message_ts+"]"); 
@@ -392,10 +389,6 @@ function isReadyToWork(assignedOwners,nominatedOwners){
 }
 
 
-function TESTtaskcomplete(){
-  var ret = taskcomplete("T864 完了","U9ST58P4L","1608162195.000100");
-  console.log(ret);
-}
 
 function taskcomplete(text, user, message_ts){
   console.log("taskcomplete() start: user["+user+"] text["+text+"] message_ts["+message_ts+"]"); 

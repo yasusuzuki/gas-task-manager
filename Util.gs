@@ -388,17 +388,6 @@ function getUserOfficeNameBySlackUserID(slackUserID){
   }
 }                
 
-function TESTgetUserEmailAddresses(){
-  var cacheService = CacheService.getScriptCache();
-  var member = {"鈴木":["test@gmail.com",,], "田中":["test2@gmail.com",,],"佐藤":["",,]};
-  cacheService.put(DEF_MEMBER, JSON.stringify(member), 21600); 
-  var ret;
-  ret = getUserEmailAddresses();
-  console.log(ret);
-  
-  cacheService.remove(DEF_MEMBER);
-
-}
 
 function getUserEmailAddresses(){
   var columnDefTask = getDefinitionFromCache(DEF_MEMBER);
