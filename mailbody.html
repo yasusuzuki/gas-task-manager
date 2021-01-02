@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <base target="_top">
+
+<style>
+/* Data Table Styles */
+body{
+  font-family: verdana, Tahoma, serifSansSerifMonospace,sans-serif;
+  color:#000000;
+  font-size:12px;
+}
+
+.DataTable {
+  letter-spacing: 0px;
+  font-size: 11px;
+
+  border: 1px solid #666666;
+  border-collapse: collapse;
+  border-spacing: 0px;
+}
+.DataTable tr {
+  background-color: #FAFAFA;
+}
+.DataTable tr.red {
+  background-color: #F3EEE7;
+}
+.DataTable tr.grey {
+  background-color: #E0E0E0;
+}
+.DataTable tr:hover > td {
+  background-color: #FBFACE;
+}
+.DataTable tr.nohover > td {
+  background-color: #FAFAFA;
+}
+
+
+.DataTable tr th {
+  text-align: center;
+  font-weight: bold;
+  white-space: nowrap;
+  vertical-align: middle;
+  background-color: #DCE1E5;
+  color: #303030;
+  border: 1px solid #666666;
+  border-collapse: collapse;
+  padding-top: 2px;
+  padding-right: 4px;
+  padding-bottom: 2px;
+  padding-left: 4px;
+}
+
+.DataTable tr td {
+  text-align: left;
+  font-weight: normal;
+  white-space: nowrap;
+  vertical-align: top;
+  color: #303030;
+
+  border: 1px solid #666666;
+  border-collapse: collapse;
+  padding-top: 1px;
+  padding-right: 4px;
+  padding-bottom: 1px;
+  padding-left: 4px;
+}
+
+
+</style>
+  </head>
+<body>
+<!--  <https://docs.google.com/spreadsheets/d/1jVXk7dFdn7fQWStyc3L5_dDXhp8ov75WecOth2msAUI/edit#gid=577452844|要回答など期限管理>  今週[15]->翌週[4]->翌々週[0]->以降[5] 
+-->
+<h4>*期限到来済み*</h4>
+<table class="DataTable">
+<tr><th>Task ID</th><th>期日</th><th>Redmine</th><th>名前</th><th>了解</th><th>完了</th></tr>
+      <? for (var i = 0; i < data.length; i++) { ?>
+        <tr>
+          <? for (var j = 0; j < data[i].length; j++) { ?>
+            <td><?= data[i][j] ?></td>
+          <? } ?>
+        </tr>
+      <? } ?>
+
+
+<tr><td>  T0775</td><td> 12/24</td><td><a href="http://aitpmtrmweb02/redmine/issues/134022">#134022</a></td><td> 要回答 #134022]  ITbテストケース作成(精算サイ...</td><td><a href="https://script.google.com/macros/s/AKfycbyxvN2DC79TUYa2_CPEPlCuPmuRxbluxfsC1Yh_KmqGq2Lw7ZT7j6Av/exec?action=ack&task=T0900">了解</a></td><td>bb</td></tr>
+<tr><td colspan="6">     -  担当者[鈴木靖,加藤壯,馬場,有木,鈴木那]  完了済[]</td></tr>
+<tr><td>  T0815</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/135691|#135691> </td><td>要回答 #135691]  2期開発生産性評価（シス要・外設...</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[鴫原,内山,八木]  完了済[]</td></tr>
+<tr><td>  T0816</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/135711|#135711> </td><td>要回答 #135711]  2期開発生産性評価（シス要・外設...</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[鴫原,内山,八木]  完了済[]</td></tr>
+<tr><td>  T0829</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/136171|#136171>   </td><td>性能テストケース作成</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[稲岡,馬場,趙]  完了済[]</td></tr>
+<tr><td>  T0837</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/136556|#136556>   </td><td>受渡調整(精算サイクル）</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[加藤壯,鈴木那]  完了済[]</td></tr>
+<tr><td>  T0841</td><td> 11/19 </td><td><http://aitpmtrmweb02/redmine/issues/136573|#136573>   </td><td>部門システムのITb利用について</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[加藤壯,兼森,鈴木那]  完了済[]</td></tr>
+<tr><td>  T0858</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/137331|#137331>   </td><td>＜サイクル＞みなし日・シナリオ検討(移行イベント)</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[鈴木靖,加藤壯,馬場,有木,鈴木那]  完了済[鈴木靖]</td></tr>
+<tr><td>  T0864</td><td> 12/24 </td><td><http://aitpmtrmweb02/redmine/issues/137851|#137851>   </td><td>ジョブ実行一覧作成</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[鈴木靖,加藤壯,鈴木那,木塲,齋藤,野崎,池田]  完了済[加藤壯,木塲,齋藤]</td></tr>
+<tr><td>  T0877</td><td> 12/10 </td><td><http://aitpmtrmweb02/redmine/issues/138363|#138363>   </td><td>標準外配置資源の洗い出し依頼</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[稲岡,加藤壯,趙]  完了済[]</td></tr>
+<tr><td>  T0886</td><td> 12/08 </td><td><http://aitpmtrmweb02/redmine/issues/138411|#138411> </td><td>要回答 #138411]  ITb準備作業計画の最新化依頼</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[加藤義,鴫原,木塲,野崎]  完了済[]</td></tr>
+<tr><td>  T0837</td><td> 12/03 </td><td><http://aitpmtrmweb02/redmine/issues/136822|#136822>   </td><td>変更管理（オーナー部・SSI起因）の計画策定：レビュー管...</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[鈴木靖,野崎,池田]  完了済[]</td></tr>
+<tr><td>  T0889</td><td> 12/17 </td><td>#______ </td><td>【共有】2期性能TF定例会(2020/11/27)の情報共有...</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[加藤壯,馬場,有木,齋藤,池田]  完了済[]</td></tr>
+<tr><td>  T0893</td><td> 12/10 </td><td>#______ </td><td>【回答依頼】【12/11期限】1期保守ドキュメント削減_2期...</td><td>了解</td><td>完了</td></tr>
+<tr><td colspan="6">     -  担当者[齋藤,池田]  完了済[]</td></tr>
+</table>
+
+
+<h4>*明日期日*</h4>
+　　ありません
+<h4>*担当者未割当* </h4>
+
+  T0896 01/28 <http://aitpmtrmweb02/redmine/issues/139009|#139009>   ITbケース作成（サイクル：移行イベント）
+     -  KKSE・KKZEの依頼先[鈴木靖,稲岡,馬場,有木,趙]
+     -  KKSE・KKZEの了解済[鈴木靖,馬場,有木,趙]
+     -  発信日[12/04]から[14]営業日経過　期日まで[ 40]％経過
+  T0897 12/17 <http://aitpmtrmweb02/redmine/issues/139029|#139029>   JAR依存関係の整理(12月)
+     -  KKSE・KKZEの依頼先[池田]
+     -  KKSE・KKZEの了解済[鈴木靖]
+     -  発信日[12/04]から[14]営業日経過　期日まで[175]％経過
+  T0898 12/10 <http://aitpmtrmweb02/redmine/issues/139113|#139113>   20年12月度　月次報告資料(コスト）準備のお願い
+     -  KKSE・KKZEの依頼先[]
+     -  KKSE・KKZEの了解済[]
+     -  発信日[12/04]から[14]営業日経過　期日まで[466]％経過
+
+  </body>
+</html>
