@@ -93,7 +93,7 @@ function sanityCheck(){
   var taskIDs = flat2Dto1D(taskIDs2D);    
   var uniqueIDs = {}; //blank hash
   var dupeIDs = {}; //blank array
-  taskIDs.forEach( e => uniqueIDs[e] ? dupeIDs[e] = true : uniqueIDs[e] = true );
+  taskIDs.forEach( e => ( uniqueIDs[e] && /^[tT]\d\d\d\d$/.test(e) ) ? dupeIDs[e] = true : uniqueIDs[e] = true );
   var strangeIDs = taskIDs.filter( e => ! /^[tT]\d\d\d\d$/.test(e) );
   
   var text = "";
