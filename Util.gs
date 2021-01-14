@@ -99,6 +99,7 @@ function slackSendMessageToChannel(channelID,message){
     "token": getSlackBotAppToken(),  //開発時(Incoming Webhooks)はこちらをコメントアウト
     "channel": channelID,
     "blocks":  message,
+    "text": "処理が完了しました"
   };
   var messageOptions = {
     "method" : "post",
@@ -321,8 +322,14 @@ function redmineToLink(text){
     text = text.replace(/^\s*#|\s*$/,"");
     //ただし、表示名称は読みやすくするために#をつけなおす
     return "<http://aitpmtrmweb02/redmine/issues/"+text+"|#"+text+">" 
+  } else if ( /^\d\d\d\d\d\d$/.test(text) ) {
+    //#が先頭にない場合、そのままリンクを作成
+    return "<http://aitpmtrmweb02/redmine/issues/"+text+"|#"+text+">" 
   } else {
-    return text;
+    //numberのまま返却すると、後続の以下のような処理でInvalid array lengthエラーになってしまう。
+  　//TODO:正しい対処方法を確認する
+    // text = text + Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title);
+    return text.toString();
   }
 }
 

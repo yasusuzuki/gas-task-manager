@@ -44,7 +44,7 @@
 　　PEND　タスク番号をハイパーリンクにする
   　済　2020/12/23 タスク重複をチェックする
   　PEND Gmail経由で了解・完了コマンドを実行できるようなＷｅｂＵＩ
-   PEND　「このコンテンツは表示できません」を別のテキストに置き換える
+  　PEND　「このコンテンツは表示できません」を別のテキストに置き換える
    
 */
 
@@ -90,13 +90,21 @@ function sanityCheck(){
   var lastRow = taskSheet.getLastRow().toString();
   var stop = stopWatch();
   var taskIDs2D = taskSheet
-      .getRange(col("タスクID") + "6:" + col("タスクID") +lastRow).getValues();
+      .getRange(col("タスクID") + "6:" + col("タスクID") +lastRow)
+      .getValues();
   console.log("findAll in listTask() completed in " + stop() + "sec");
-  var taskIDs = flat2Dto1D(taskIDs2D);    
+  var taskIDs = flat2Dto1D(taskIDs2D);
+  var lastCell = taskIDs.pop();
+  while(lastCell == ""){ 
+    lastCell = taskIDs.pop()
+  }
+  taskIDs.push( lastCell );
+  
   var uniqueIDs = {}; //blank hash
   var dupeIDs = {}; //blank array
-  taskIDs.forEach( e => ( uniqueIDs[e] && /^[tT]\d\d\d\d$/.test(e) ) ? dupeIDs[e] = true : uniqueIDs[e] = true );
+  taskIDs.forEach( e => ( uniqueIDs[e] ) ? dupeIDs[e] = true : uniqueIDs[e] = true );
   var strangeIDs = taskIDs.filter( e => ! /^[tT]\d\d\d\d$/.test(e) );
+  strangeIDs.forEach( e => console.log("["+e+"] "));
   
   var text = "";
   if ( Object.keys(dupeIDs).length > 0 ){
@@ -506,7 +514,6 @@ function doGet(e) {
   return HtmlService.createHtmlOutput(html);
   
 }
-
 
 
 
