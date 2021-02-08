@@ -157,12 +157,12 @@ function summaryReport(){
   for(let i=0; text.length > i; i++) {
     message_size += text[i].length;
     if( message_size + i - message_offset > 2950 ){ //文字数＋改行数が3001以上にならなければよいが、念のため2950を閾値として設定
-      slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,i).join("\n")}}]));
+      slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,i).join('')}}]));
       message_offset = i;
       message_size = text[i].length;
     }
   }
-  slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,text.length).join("\n")}}]));
+  slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,text.length).join('')}}]));
 
   //TODO: sendEmail(text);
   updateLogSheet("summaryReport()　完了しました");
