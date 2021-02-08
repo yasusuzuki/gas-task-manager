@@ -156,7 +156,7 @@ function summaryReport(){
   let message_offset = 0;
   for(let i=0; text.length > i; i++) {
     message_size += text[i].length;
-    if( message_size + i - message_offset > 2950 ){ //文字数＋改行数が3001以上にならなければよいが、念のため2950を閾値として設定
+    if( message_size  > 2950 ){ //文字数が3001以上にならなければよいはずだが、念のため2950を閾値として設定
       slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,i).join('')}}]));
       message_offset = i;
       message_size = text[i].length;
