@@ -76,12 +76,13 @@ function summaryReport(){
   updateLogSheet("summaryReport()を開始します。");
   let data = listTask();
   let col = columnNameMapForArrayIndex();
-  let text = "<"+DOCUMENT_URL+"|要回答など期限管理>"
-  text = text + "  今週["+data.weekly[0]+"]->翌週["+data.weekly[1]+"]->翌々週["+data.weekly[2]+"]->以降["+data.weekly[3]+"] \n";
+  let text = [];
+  text.push("<"+DOCUMENT_URL+"|要回答など期限管理>");
+  text.push("  今週["+data.weekly[0]+"]->翌週["+data.weekly[1]+"]->翌々週["+data.weekly[2]+"]->以降["+data.weekly[3]+"] \n");
   
   
-  text = text + "*期限到来済み* \n";
-  if ( data.dueToday.length == 0 ){text = text+"　　ありません\n"}
+  text.push("*期限到来済み* \n");
+  if ( data.dueToday.length == 0 ){text.push("　　ありません\n")}
   for (let i=0; i< data.dueToday.length; i++){
     let dataRow = data.dueToday[i];
     console.log("formatting dueToday taskID:" + dataRow[col("タスクID")]); 
@@ -92,16 +93,16 @@ function summaryReport(){
     title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{30})(.*)/,"$1...");
     let assignedOwners = getActualTaskOwners(dataRow);
     let completedOwners = getCompletedTaskOwners(dataRow);
-    text = text + Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title);
-    text = text + Utilities.formatString("     -  担当者[%s]  完了済[%s]\n",assignedOwners.join(","),completedOwners.join(","));
+    text.push(Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title) );
+    text.push(Utilities.formatString("     -  担当者[%s]  完了済[%s]\n",assignedOwners.join(","),completedOwners.join(",")) );
     if ( isCloseable(completedOwners, assignedOwners) ) {
-      text = text + "     -  全員完了済み。ステータスを「対応中」から「完了」へ変更可能。\n";
+      text.push("     -  全員完了済み。ステータスを「対応中」から「完了」へ変更可能。\n" );
     } 
   }
 
 
-  text = text + "*明日期日* \n";
-  if ( data.dueNextBusDay.length == 0 ){text = text+"　　ありません\n"}
+  text.push("*明日期日* \n");
+  if ( data.dueNextBusDay.length == 0 ){text.push("　　ありません\n")}
   for (let i=0; i< data.dueNextBusDay.length; i++){
     let dataRow = data.dueNextBusDay[i];
     console.log("formatting dueNextBusDay taskID:" + dataRow[col("タスクID")]); 
@@ -111,12 +112,12 @@ function summaryReport(){
     let title = dataRow[col("件名")].toString();
     title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{30})(.*)/,"$1...");
     let assignedOwners = getActualTaskOwners(dataRow);
-    text = text + Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title);
-    text = text + Utilities.formatString("     -  担当者[%s]\n",assignedOwners.join(","));
+    text.push(Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title) );
+    text.push(Utilities.formatString("     -  担当者[%s]\n",assignedOwners.join(",")) );
   }
 
-  text = text + "*担当者未割当* \n";
-  if ( data.pendAssign.length == 0 ){text = text+"　　ありません\n"}
+  text.push("*担当者未割当* \n");
+  if ( data.pendAssign.length == 0 ){text.push("　　ありません\n")}
   for (let i=0; i< data.pendAssign.length; i++){
     let dataRow = data.pendAssign[i];
     console.log("formatting pendAssign taskID:" + dataRow[col("タスクID")]); 
@@ -131,10 +132,10 @@ function summaryReport(){
     let actualOwners = getKKSSAssignedTaskOwners(dataRow);
     let nominatedOwners =getKKSSNominatedTaskOwners(dataRow);
     let readyToGo = isReadyToWork(actualOwners,nominatedOwners);
-    text = text + Utilities.formatString("  %5s %5s %7s %s\n",taskID,effectiveDueDateStr,redmine,title);
-    text = text + Utilities.formatString("     -  KKSE・KKZEの依頼先[%s]\n",nominatedOwners.join(","));
-    text = text + Utilities.formatString("     -  KKSE・KKZEの了解済[%s]\n",actualOwners.join(","));    
-    if(readyToGo){ text = text + "     -  全員了解済み。ステータスを「着手指示待ち」から「対応中」へ変更可能。\n"}
+    text.push(Utilities.formatString("  %5s %5s %7s %s\n",taskID,effectiveDueDateStr,redmine,title) );
+    text.push(Utilities.formatString("     -  KKSE・KKZEの依頼先[%s]\n",nominatedOwners.join(",")) );
+    text.push(Utilities.formatString("     -  KKSE・KKZEの了解済[%s]\n",actualOwners.join(",")) );    
+    if(readyToGo){ text.push("     -  全員了解済み。ステータスを「着手指示待ち」から「対応中」へ変更可能。\n") }
 
     let requestDate = toDateShortString(dataRow[col("発信日")]);
     let daysSinceRequestDate,daysUntilDueDate;
@@ -143,14 +144,26 @@ function summaryReport(){
       daysSinceRequestDate = diffWorkingDays(dataRow[col("発信日")], new Date());
       daysUntilDueDate = diffWorkingDays(new Date(),effectiveDueDate);
       let atatameRate  = daysSinceRequestDate/(daysSinceRequestDate+daysUntilDueDate-1);
-      text = text + Utilities.formatString("     -  発信日[%s]から[%s]営業日経過　期日まで[%3d]％経過\n"
-                  ,requestDate,daysSinceRequestDate,atatameRate*100);
+      text.push(Utilities.formatString("     -  発信日[%s]から[%s]営業日経過　期日まで[%3d]％経過\n"
+                  ,requestDate,daysSinceRequestDate,atatameRate*100) );
     } else {
-      text = text + Utilities.formatString("     -  発信日が正しく設定されていません\n");
+      text.push(Utilities.formatString("     -  発信日が正しく設定されていません\n") );
     }
   }
 
-  slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text}}]));
+  //３００１文字以上のメッセージ送信はエラーになってしまうので、メッセージを分割して送信する
+  let message_size = 0;
+  let message_offset = 0;
+  for(let i=0; text.length > i; i++) {
+    message_size += text[i].length;
+    if( message_size + i - message_offset > 2950 ){ //文字数＋改行数が3001以上にならなければよいが、念のため2950を閾値として設定
+      slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,i).join("\n")}}]));
+      message_offset = i;
+      message_size = text[i].length;
+    }
+  }
+  slackSendMessageToTeam(JSON.stringify([{"type": "section","text": {"type": "mrkdwn","text":text.slice(message_offset,text.length).join("\n")}}]));
+
   //TODO: sendEmail(text);
   updateLogSheet("summaryReport()　完了しました");
 }

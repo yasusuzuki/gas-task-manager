@@ -294,15 +294,16 @@ function TESTcolumnNameMap(){
   CacheService.getScriptCache().remove(DEF_COLUMN_TASK);
   var col = columnNameMapForA1Notation();
   console.log(col("タスクID"));
-  //console.log(col("タスクXX"));
-  //console.log(col(null));
+  //console.log(col("タスクXX"));  //throw error
+  //console.log(col(null));  //throw error
   col = columnNameMapForRange();
   console.log(col("タスクID"));
-  //console.log(col("タスクXX"));
-  //console.log(col(null));
+  //console.log(col("タスクXX"));  //throw error
+  //console.log(col(null));   //throw error
   col = columnNameMapForArrayIndex();
   console.log(col("タスクID"));
 }
+
 function TESTfindRowByTaskID(){
   console.log("** TESTfindRowByTaskID");
 
