@@ -90,7 +90,7 @@ function summaryReport(){
     let dueDateStr = toDateShortString(dataRow[col("期日")]);
     let redmine = redmineToLink(dataRow[col("Redmine")]);
     let title = dataRow[col("件名")].toString();
-    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{30})(.*)/,"$1...");
+    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{28})(.*)/,"$1...");
     let assignedOwners = getActualTaskOwners(dataRow);
     let completedOwners = getCompletedTaskOwners(dataRow);
     text.push(Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title) );
@@ -110,7 +110,7 @@ function summaryReport(){
     let dueDateStr = toDateShortString(dataRow[col("期日")]);
     let redmine = redmineToLink(dataRow[col("Redmine")]);
     let title = dataRow[col("件名")].toString();
-    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{30})(.*)/,"$1...");
+    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{28})(.*)/,"$1...");
     let assignedOwners = getActualTaskOwners(dataRow);
     text.push(Utilities.formatString("  %5s %5s %7s %s\n",taskID,dueDateStr,redmine,title) );
     text.push(Utilities.formatString("     -  担当者[%s]\n",assignedOwners.join(",")) );
@@ -127,7 +127,7 @@ function summaryReport(){
     let effectiveDueDateStr = toDateShortString(effectiveDueDate);
     let redmine = redmineToLink(dataRow[col("Redmine")]);
     let title = dataRow[col("件名")].toString();
-    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{30})(.*)/,"$1...");
+    title = title.replace(/\[.*?\]/,"").replace( /\(回答中\)/,"").split(/\n/)[0].replace( /(.{28})(.*)/,"$1...");
     //依頼先と了解済みの状況
     let actualOwners = getKKSSAssignedTaskOwners(dataRow);
     let nominatedOwners =getKKSSNominatedTaskOwners(dataRow);
