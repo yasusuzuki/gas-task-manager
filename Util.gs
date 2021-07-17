@@ -136,6 +136,12 @@ function getSlackTeamChannelID() {
   if (!columnDef["SLACK_TEAM_CHANNEL"]) { throw new Error("問題発生：SLACK_TEAM_CHANNELが定数シートに登録されていません") }
   return columnDef["SLACK_TEAM_CHANNEL"][0];
 }
+function getSlackNotificationChannelID() {
+  let columnDef = getDefinitionFromCache(DEF_APP_CONFIG);
+  if (!columnDef["SLACK_NOTIFICATION_CHANNEL"]) { throw new Error("問題発生：SLACK_NOTIFICATION_CHANNELが定数シートに登録されていません") }
+  return columnDef["SLACK_NOTIFICATION_CHANNEL"][0];
+}
+
 function getSlackDeveloperID() {
   let columnDef = getDefinitionFromCache(DEF_APP_CONFIG);
   if (!columnDef["DEVELOPER_SLACK_ID"]) { throw new Error("問題発生：DEVELOPER_SLACK_IDが定数シートに登録されていません") }
@@ -150,6 +156,7 @@ function slackSendMessageToChannel(channelID, message) {
     "token": getSlackBotAppToken(),  //開発時(Incoming Webhooks)はこちらをコメントアウト
     "channel": channelID,
     "blocks": message,
+    "unfurl_links": false,   //投稿メッセージ内のリンクを展開させない（情報が多すぎて読みにくくなるから）
     "text": "処理が完了しました"
   };
   let messageOptions = {
@@ -208,26 +215,42 @@ function getSlackIncomingWebhooksURL() {
 //メッセージの読み取り -  conversations.historyの使用
 // - 必要なスコープはBot Token Scopesの　channels:read,im:read (groups:read or mpim:read)
 // ()内はこのSlack Appでは利用しない
-function slackReadMessages(channelID) {
+function slackReadMessages(channelID,oldest_ts = null,latest_ts = null) {
 
   let messagePayload = {
     "token": getSlackBotAppToken(),
     "channel": channelID,
     "limit": 30,
   };
-  let last_ts = getLastSlackMessageTS();
-  if (last_ts == null) {
-    messagePayload["limit"] = 1;
-  } else if (/^\d+\.\d+$/.test(last_ts)) {
-    messagePayload["oldest"] = last_ts;
-  } else {
-    throw new Error("問題発生:プロパティに設定されている最後のメッセージTSが不正です[" + last_ts + "]");
-  }
+
   let messageOptions = {
     "method": "get",
     "contentType": "application/x-www-form-urlencoded",
     "payload": messagePayload
   };
+
+  if (oldest_ts == null) {
+    messagePayload["limit"] = 1; //oldest_tsが未設定の場合、最新の１投稿だけ抽出する
+  } else if (/^\d+\.\d+$/.test(oldest_ts)) {
+    messagePayload["oldest"] = oldest_ts;
+  } else {
+    throw new Error("問題発生:プロパティに設定されている最後のメッセージTSが不正です[" + oldest_ts + "]");
+  }
+
+  if ( latest_ts ) {
+    if ( /^\d+\.\d+$/.test(latest_ts) ) {
+      messagePayload["latest"] = latest_ts;
+    } else {
+      throw new Error("問題発生:プロパティに設定されている最新のメッセージTSが不正です[" + latest_ts + "]");
+    }
+  }
+
+  //通常は、oldest_ts　と latest_tsを含まない。それだと、1つのts指定で、1メッセージのみ取得することができない
+  //そのため、1メッセージのみ取得する意図がある場合は、oldest_tsとlatest_tsを”含む”設定とする
+  if ( oldest_ts && latest_ts && oldest_ts == latest_ts ) {
+    messagePayload["inclusive"] = "true";
+  }
+
   console.log("slack read :" + JSON.stringify(messageOptions));
   let httpRes = UrlFetchApp.fetch("https://slack.com/api/conversations.history", messageOptions)
   let ret = JSON.parse(httpRes);
@@ -235,7 +258,7 @@ function slackReadMessages(channelID) {
     throw new Error("問題発生：Slack メッセージ受信に失敗。チャンネルID[" + channelID + "]" + JSON.stringify(ret));
   } else {
     let data = [];
-    ret.messages.forEach(e => data.push({ text: e.text, user: e.user, ts: e.ts }));
+    ret.messages.forEach(e => data.push({ text: e.text, user: e.user, ts: e.ts, reactions: e.reactions }));
     return data;
   }
 }
@@ -256,12 +279,33 @@ function setLastSlackMessageTS(last_message_ts) {
 }
 
 function slackReadMessagesFromTeamChannel() {
+  let channelID = "";
   if (getReleaseEnvironment() == "PROD") {
-    return slackReadMessages(getSlackTeamChannelID());
+    channelID = getSlackTeamChannelID();
   } else if (getReleaseEnvironment() == "DEV") {
-    let channelID = slackConversationOpenByUserID(getSlackDeveloperID());
-    return slackReadMessages(channelID);
+    channelID = slackConversationOpenByUserID(getSlackDeveloperID());
   }
+  //チームチャンネルから抽出した最後の投稿のタイムスタンプを取得
+  let oldest_ts = getLastSlackMessageTS();
+  return slackReadMessages(channelID,oldest_ts);
+}
+
+function slackReadMessagesFromNotificationChannel(){
+  if (getReleaseEnvironment() == "PROD") {
+    channelID = getSlackNotificationChannelID();
+  } else if (getReleaseEnvironment() == "DEV") {
+    channelID = slackConversationOpenByUserID(getSlackDeveloperID());
+  }
+  //DEBUG:  let oldest_ts = new Date('2021/07/09 00:00:00').getTime() /1000 + ".000000";
+  let prevBusDays = getPreviousWorkDays(1,new Date());
+  console.log("昨日のSlackメッセージを取得します　昨日＝["+prevBusDays+"]")
+  let oldest_ts = Math.floor(prevBusDays.getTime() /1000) + ".000000";
+  return slackReadMessages(channelID,oldest_ts);
+}
+
+function slackReadOneMessageFromNotificationChannel(ts){
+  let channelID = getSlackNotificationChannelID();
+  return slackReadMessages(channelID,ts,ts);
 }
 
 // 別メッセージへのリンク作成 - chat.getPermalinkの使用
@@ -294,6 +338,22 @@ function slackLinkToTeamMessage(message_ts) {
     let channelID = slackConversationOpenByUserID(getSlackDeveloperID());
     return slackLinkToMessage(channelID, message_ts);
   }
+}
+
+//公式にサポートされたやり方ではないが、事実上は正しく動く
+//https://stackoverflow.com/questions/46355373/get-a-messages-ts-value-from-archives-link
+function slackExtractTSFromArchiveLink(url){
+  //例えば以下のURLの場合、tsは1625916353.001100
+  //https://gocha-gacha.slack.com/archives/C9SC0KF3K/p1625916353001100
+  let regexp = /\/p(\d\d\d\d\d\d\d\d\d\d)(\d\d\d\d\d\d)/;
+  let regexpRet = regexp.exec(url);
+  if ( regexpRet == null ) {
+    throw new Error("問題発生：Slackの投稿へのURLからタイムスタンプを抽出できません。URL["+url+"]");
+  }
+  let firstSection = RegExp.$1;
+  let lastSection = RegExp.$2;
+  return firstSection + "." + lastSection
+
 }
 
 //userIDからチャンネルIDを特定し、会話を開局する
@@ -413,14 +473,14 @@ function convertToLetter(columnNumber) {
 }
 
 /**
- * タスク管理簿の列定義をA1記法で取得
+ * 管理簿の列定義をA1記法で取得
  * Sheet.getRangeList()関数は引数にA1記法しか受け入れてくれない　例：["A1:A2","B10:B11"]
  * どうしてもA1記法が必要な場合に使う関数
  */
-function columnNameMapForA1Notation() {
-  let columnDefTask = getDefinitionFromCache(DEF_COLUMN_TASK);
+function columnNameMapForA1Notation(columnDefName = DEF_COLUMN_TASK) {
+  let columnDef = getDefinitionFromCache(columnDefName);
   let ret = {};
-  Object.keys(columnDefTask).forEach(e => ret[e] = convertToLetter(Number(columnDefTask[e][0]) + 1));
+  Object.keys(columnDef).forEach(e => ret[e] = convertToLetter(Number(columnDef[e][0]) + 1));
   return function (key) {
     if (ret[key] == null) { throw new Error("問題発生：未定義のキー[" + key + "]で定数データを取得しようとしました") }
     return ret[key];
@@ -428,14 +488,14 @@ function columnNameMapForA1Notation() {
 }
 
 /**
- * タスク管理簿の列定義をRangeで利用できる形で取得
+ * 管理簿の列定義をRangeで利用できる形で取得
  * Sheet.getRange(row,col)などで取得する場合、列番号は１から始まる
  * そのため、＋１する必要がある
  */
-function columnNameMapForRange() {
-  let columnDefTask = getDefinitionFromCache(DEF_COLUMN_TASK);
+function columnNameMapForRange(columnDefName = DEF_COLUMN_TASK) {
+  let columnDef = getDefinitionFromCache(columnDefName);
   let ret = {};
-  Object.keys(columnDefTask).forEach(e => ret[e] = Number(columnDefTask[e][0]) + 1);
+  Object.keys(columnDef).forEach(e => ret[e] = Number(columnDef[e][0]) + 1);
   return function (key) {
     if (ret[key] == null) { throw new Error("問題発生：未定義のキー[" + key + "]で定数データを取得しようとしました") }
     return ret[key];
@@ -443,13 +503,13 @@ function columnNameMapForRange() {
 }
 
 /**
- * タスク管理簿の列定義をRangeで利用できる形で取得
+ * 管理簿の列定義をRangeで利用できる形で取得
  * Range.getValues()などで取得した２次元配列の場合、列番号は０から始まる
  */
-function columnNameMapForArrayIndex() {
-  let columnDefTask = getDefinitionFromCache(DEF_COLUMN_TASK);
+function columnNameMapForArrayIndex(columnDefName = DEF_COLUMN_TASK) {
+  let columnDef = getDefinitionFromCache(columnDefName);
   let ret = {};
-  Object.keys(columnDefTask).forEach(e => ret[e] = Number(columnDefTask[e][0]));
+  Object.keys(columnDef).forEach(e => ret[e] = Number(columnDef[e][0]));
   return function (key) {
     if (ret[key] == null) { throw new Error("問題発生：未定義のキー[" + key + "]で定数データを取得しようとしました") }
     return ret[key];
@@ -509,6 +569,28 @@ function findMaxTaskID() {
 }
 
 /**
+ * 回報管理簿上でもっとも大きなタ回報IDを特定する
+ */
+function assignNewNotificationID() {
+  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIFICATION);
+  let col = columnNameMapForRange(COL_DEF_NOTIFICATION);
+  let data = sheet.getRange(1, col("回報ID"), sheet.getLastRow(), 1).getValues();
+  let ids = data.filter(e => /^K\d\d\d\d$/.test(e));
+  let max_id = "";
+  if (ids == null || ids.length == 0) {
+    throw new Error("問題発生：Max回報IDの取得失敗");
+  } else if (ids.length == 1) {
+    max_id = ids[0];
+  } else {
+    max_id = ids.reduce((a, b) => a > b ? a : b);
+  }
+  //現状のMAX IDに１追加して、新しいIDを採番する
+  let reg_ret = /^K(\d\d\d\d)$/.exec(max_id);
+  let new_id = Utilities.formatString("K%04d",parseInt(reg_ret[1]) + 1);
+  return new_id;
+}
+
+/**
  * システムログシートにログコメントを追記する
  */
 function updateLogSheet(comment) {
@@ -560,10 +642,11 @@ function updateUserActionLogSheet(id, user, action, taskID, message) {
  *    　そのため、例え別ユーザがすでにプロテクションをかけていたとしてもこのスクリプトがプロテクションを
  *      追加すると、そのユーザは編集ができなくなる。 
 */
-function protectTaskSheet() {
+
+function protectSheet(sheetName){
   console.log("protectRange() start"); let stop = stopWatch();
   //let protection = range.protect().setDescription('m(_ _)m タスク管理Botが編集中です');
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_TASK);
+  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
   let protection = sheet.protect().setDescription('m(_ _)m タスク管理Botが編集中です');
   let me = Session.getEffectiveUser();
   protection.addEditor(me);
@@ -575,6 +658,15 @@ function protectTaskSheet() {
   }
   console.log("protectRange() finished in " + stop() + "ms");
 }
+
+function protectTaskSheet(){
+  protectSheet(SHEET_TASK);
+}
+
+function protectNotificationSheet(){
+  protectSheet(SHEET_NOTIFICATION);
+}
+
 
 /**
  * 管理簿のロックを解除する
@@ -691,11 +783,12 @@ function diffWorkingDays(startDate, endDate) {
 
 /**
  * 次の営業日を取得する dateAdd()のようなもの
+ * ※次の営業日の0時0分0秒を表すDate型のデータを返却する
  * @param {number} count　基準となる日付から何営業日後かを示す正の整数
  * @param {Date} startDate 基準となる日付
  */
 function getNextWorkDays(count, startDate) {
-  if (count < 0) { throw new Error("問題発生：getNextWorkDays()は加算のみ対応しています") }
+  if (count < 0) { throw new Error("問題発生：getNextWorkDays()は正数のみ対応しています") }
   if (!(startDate instanceof Date)) { throw new Error("問題発生：getNextWorkDays()のパラメータstartDateはDate型でなければいけません") }
   let day = new Date(startDate.valueOf());
   for (let i = 0; i < count; i++) {
@@ -704,7 +797,29 @@ function getNextWorkDays(count, startDate) {
       day.setDate(day.getDate() + 1);
     }
   }
-  return day;
+  //startDateパラメータが時分秒付の場合、dayも時分秒が付いてしまう
+  //呼び出し側の利便性を考慮して、0時0分0秒にセットして返却する
+  return new Date(day.setHours(0,0,0,0));}
+
+/**
+ * 前の営業日を取得する dateAdd()のようなもの
+ * ※前の営業日の0時0分0秒を表すDate型のデータを返却する
+ * @param {number} count　基準となる日付から何営業日後かを示す"負"の整数
+ * @param {Date} startDate 基準となる日付
+ */
+function getPreviousWorkDays(count, startDate) {
+  if (count < 0) { throw new Error("問題発生：getPreviousWorkDays()は正数のみ対応しています") }
+  if (!(startDate instanceof Date)) { throw new Error("問題発生：getPreviousWorkDays()のパラメータstartDateはDate型でなければいけません") }
+  let day = new Date(startDate.valueOf());
+  for (let i = 0; i < count; i++) {
+    day.setDate(day.getDate() - 1);
+    while (!isBusinessDay(day)) {
+      day.setDate(day.getDate() - 1);
+    }
+  }
+  //startDateパラメータが時分秒付の場合、dayも時分秒が付いてしまう
+  //呼び出し側の利便性を考慮して、0時0分0秒にセットして返却する
+  return new Date(day.setHours(0,0,0,0));
 }
 
 /**
@@ -713,7 +828,7 @@ function getNextWorkDays(count, startDate) {
 //TODO: この性能の一時措置をどうするか？getDefinitionFromCache(DEF_HOLIDAYS) はだいたい10msぐらい。diffWorkingDays()だと数十回呼び出すので、ちりつもでかなり性能影響がある。
 let TMP_HOLIDAYS = null;
 function isBusinessDay(date) {
-  if (!(date instanceof Date)) { throw new Error("問題発生：getNextWorkDays()のパラメータstartDateはDate型でなければいけません") }
+  if (!(date instanceof Date)) { throw new Error("isBusinessDay()のパラメータdateはDate型でなければいけません") }
   //土日ならば休み
   if (date.getDay() == 0 || date.getDay() == 6) {
     return false;

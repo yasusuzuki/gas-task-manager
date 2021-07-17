@@ -1,8 +1,11 @@
-//管理簿上のシート名：　”タスク管理簿シート”、”システムログシート”、”ユーザログシート”、”定数シート”
-const [SHEET_TASK,SHEET_SYSTEM_LOG,SHEET_USERACTION_LOG,SHEET_DEF] = ["期限管理","SystemLog","UserLog","def"];
-//定数シート内のカテゴリ：　タスク管理簿の列定義、メンバー定義、アプリ設定、祝日設定
-const [DEF_COLUMN_TASK,DEF_MEMBER,DEF_APP_CONFIG,DEF_HOLIDAYS] = ["col_def_task","def_member","def_app_config","def_holidays"];
-const DEF_ITEM_LIST = [DEF_COLUMN_TASK,DEF_MEMBER,DEF_APP_CONFIG,DEF_HOLIDAYS];
+//管理簿上のシート名：　”タスク管理簿シート”、”システムログシート”、”ユーザログシート”、”定数シート”、”回報管理簿シート”
+const [SHEET_TASK,SHEET_SYSTEM_LOG,SHEET_USERACTION_LOG,SHEET_DEF,SHEET_NOTIFICATION] = ["期限管理","SystemLog","UserLog","def","回報"];
+//定数シート内のカテゴリ：　タスク管理簿の列定義、メンバー定義、アプリ設定、祝日設定、回報管理簿の列定義、回報用のリアクション定義
+const [DEF_COLUMN_TASK,DEF_MEMBER,DEF_APP_CONFIG,DEF_HOLIDAYS,COL_DEF_NOTIFICATION,DEF_REACTION] = 
+["col_def_task","def_member","def_app_config","def_holidays","col_def_notification","def_reaction"];
+//キャッシュに格納したい定数はここに登録する
+const DEF_ITEM_LIST = [DEF_COLUMN_TASK,DEF_MEMBER,DEF_APP_CONFIG,DEF_HOLIDAYS,COL_DEF_NOTIFICATION,DEF_REACTION];
+
 const DOCUMENT_ID = "1jVXk7dFdn7fQWStyc3L5_dDXhp8ov75WecOth2msAUI";
 const DOCUMENT_URL = "https://docs.google.com/spreadsheets/d/1jVXk7dFdn7fQWStyc3L5_dDXhp8ov75WecOth2msAUI/edit#gid=577452844"
 const REDMINE_HOST = "aitpmtrmweb02";
@@ -243,7 +246,7 @@ function scheduledPollingCommandsFromSlack(){
     }
   } catch (exception) {
     updateLogSheet("scheduledPollingCommandsFromSlack()　問題発生！！！中止します");
-    throw new Error(exception);
+    throw exception;
   } finally {
     //シートにかかっていたプロテクションをすべて削除する。
     // TODO:他のプロテクションも全部削除してしまう問題を修正する
