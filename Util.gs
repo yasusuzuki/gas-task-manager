@@ -291,20 +291,33 @@ function slackReadMessagesFromTeamChannel() {
 }
 
 function slackReadMessagesFromNotificationChannel(){
+  let channelID = "";
   if (getReleaseEnvironment() == "PROD") {
     channelID = getSlackNotificationChannelID();
   } else if (getReleaseEnvironment() == "DEV") {
     channelID = slackConversationOpenByUserID(getSlackDeveloperID());
   }
   //DEBUG:  let oldest_ts = new Date('2021/07/09 00:00:00').getTime() /1000 + ".000000";
-  let prevBusDays = getPreviousWorkDays(1,new Date());
-  console.log("昨日のSlackメッセージを取得します　昨日＝["+prevBusDays+"]")
-  let oldest_ts = Math.floor(prevBusDays.getTime() /1000) + ".000000";
+  //let dateRetrievedSince = getPreviousWorkDays(1,new Date());
+  //TODO: 週末に実行すると重複して投稿メッセージを取得してしまう仕様を改善できていないので、
+  //いったん、いまは、前営業日ではなく前日から取得する仕様とする。
+  //週末の実行がエラーになったりするとリカバリが大変なので、基本的に、毎朝実行し、前営業日のメッセージを取得
+  //する仕様が理想
+  let yesterday = new Date();
+  yesterday.setHours(0,0,0);
+  yesterday.setDate(yesterday.getDate() - 1);
+  let oldest_ts = Math.floor(yesterday.getTime() /1000) + ".000000";
+  console.log("Slackメッセージを取得します　channelID=["+channelID+"]oldest_ts=["+oldest_ts+"] 昨日＝["+yesterday.toDateString()+"]")
   return slackReadMessages(channelID,oldest_ts);
 }
 
 function slackReadOneMessageFromNotificationChannel(ts){
-  let channelID = getSlackNotificationChannelID();
+  let channelID = "";
+  if (getReleaseEnvironment() == "PROD") {
+    channelID = getSlackNotificationChannelID();
+  } else if (getReleaseEnvironment() == "DEV") {
+    channelID = slackConversationOpenByUserID(getSlackDeveloperID());
+  }
   return slackReadMessages(channelID,ts,ts);
 }
 
@@ -568,27 +581,6 @@ function findMaxTaskID() {
   }
 }
 
-/**
- * 回報管理簿上でもっとも大きなタ回報IDを特定する
- */
-function assignNewNotificationID() {
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NOTIFICATION);
-  let col = columnNameMapForRange(COL_DEF_NOTIFICATION);
-  let data = sheet.getRange(1, col("回報ID"), sheet.getLastRow(), 1).getValues();
-  let ids = data.filter(e => /^K\d\d\d\d$/.test(e));
-  let max_id = "";
-  if (ids == null || ids.length == 0) {
-    throw new Error("問題発生：Max回報IDの取得失敗");
-  } else if (ids.length == 1) {
-    max_id = ids[0];
-  } else {
-    max_id = ids.reduce((a, b) => a > b ? a : b);
-  }
-  //現状のMAX IDに１追加して、新しいIDを採番する
-  let reg_ret = /^K(\d\d\d\d)$/.exec(max_id);
-  let new_id = Utilities.formatString("K%04d",parseInt(reg_ret[1]) + 1);
-  return new_id;
-}
 
 /**
  * システムログシートにログコメントを追記する
